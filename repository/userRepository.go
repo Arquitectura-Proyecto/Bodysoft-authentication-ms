@@ -77,7 +77,9 @@ func UpdateUser(user models.User) string {
 
 // GenerateEmail .
 func GenerateEmail(email string, password string) string {
-	if err := data.SendEmail(email, password); err != "ok" {
+	subject := "Recuperacion de Contraseña Bodysoft"
+	htmlContent := "<h1> Su contraseña es: " + password + "</h1>"
+	if err := data.SendEmail(email, htmlContent, subject); err != "ok" {
 		return err
 	}
 	return "ok"
