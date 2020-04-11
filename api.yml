@@ -1,0 +1,218 @@
+#Test with: http://editor.swagger.io/
+
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Microservice for account management
+  description: Go + MySQL
+  license:
+    name: Software Architecture, 2020-I
+host: host:4000
+basePath: /go/src/github.com/jpbmdev/BODYSOFT-AUTHENTICATION-MS
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /create-user:
+    post:
+      summary: Creates a new user
+      operationId: createUserController
+      parameters:
+        - name: User
+          in: body
+          required: true
+          description: User Object
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
+  /get-types:
+    get:
+      summary: Return all user types
+      operationId: getTypesController
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TypeList'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
+  /recover-password/{email}:
+    get:
+      summary: Sends a email with the password
+      operationId: recoverPasswordWithEmail
+      parameters:
+        - name: email
+          in: path
+          description: The email of the account
+          required: true
+          type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
+  /authentication/{email}/{password}:
+    get:
+      summary: Validates the email and password for a login
+      operationId: authenticationController
+      parameters:
+        - name: email
+          in: path
+          description: The email of the account
+          required: true
+          type: string
+        - name: password
+          in: path
+          description: The password of the account
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenData'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '401':
+            description: Unauthorized
+            schema:
+                $ref: '#/definitions/ErrorModel'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
+  /change-password:
+    put:
+      summary: Enables a user to change his actual password
+      operationId: chagePasswordController
+      parameters:
+        - name: ChangePass
+          in: body
+          required: true
+          description: ChangePass Object
+          schema:
+            $ref: '#/definitions/ChangePass'
+      responses:
+        '204':
+            description: No Content
+        '400':
+            description: Bad Request
+            schema:
+               $ref: '#/definitions/ErrorModel'
+        '401':
+            description: Unauthorized
+            schema:
+               $ref: '#/definitions/ErrorModel'
+        '500':
+            description: Internal Server Error
+            schema:
+               $ref: '#/definitions/ErrorModel'
+   
+
+definitions:
+
+    # Users
+    User:
+        type: object
+        properties:
+            email:
+                type: string
+            password:
+                type: string
+            typeid:
+                type: integer
+
+    TokenData:
+        type: object
+        properties:
+            id:
+                type: integer
+            typeid:
+                type: integer
+
+    ChangePass:
+        type: object
+        properties:
+            id:
+                type: integer
+            password:
+                type: string
+            newpassword:
+                type: string
+
+    Type:
+        type: object
+        properties:
+            id:
+                type: integer
+            createdat:
+                type: string
+            updatedat:
+                type: string
+            deletedat:
+                type: string
+            name:
+                type: string
+
+    TypeList:
+        type: object
+        required:
+          - list
+        properties:
+            list:
+              type: array
+              items:
+                $ref: '#/definitions/Type'
+
+    # Errors
+    ErrorModel:
+        type: object
+        required:
+          - message
+          - code
+        properties:
+            message:
+                type: string
+            code:
+                type: number
+
+              
