@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"time"
@@ -24,6 +25,12 @@ func ValidatePass(pass string) bool {
 		return false
 	}
 	return true
+}
+
+func generateVcode() uint {
+	v := rand.Intn(9999-1000) + 1000
+	u := uint(v)
+	return u
 }
 
 // ValidateData ..
@@ -77,6 +84,8 @@ func GetAuthTockenData(email string, pass string) (uint, uint, int, error) {
 
 // ServCreateUser ..
 func ServCreateUser(user models.User) error {
+	user.Validate = false
+	user.VCode = generateVcode()
 	return repository.CreateUser(user)
 }
 

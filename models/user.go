@@ -11,4 +11,6 @@ type User struct {
 	Email    string `gorm:"unique;not null"`
 	Password string
 	TypeID   uint
+	VCode    uint
+	Validate bool
 }
