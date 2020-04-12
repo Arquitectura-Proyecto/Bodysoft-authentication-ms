@@ -135,7 +135,7 @@ func ValidateUser(email string, vcode uint) (int, error) {
 			}
 			return http.StatusNoContent, nil
 		}
-		return http.StatusBadRequest, errors.New("Código de Verificación Incorrecto")
+		return http.StatusUnauthorized, errors.New("Código de Verificación Incorrecto")
 	}
 	return http.StatusConflict, errors.New("El usuario ya esta Verificado")
 }
