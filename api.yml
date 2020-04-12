@@ -83,6 +83,65 @@ paths:
           schema:
             $ref: '#/definitions/ErrorModel'
 
+  /verify-acount/{email}/{vcode}:
+    get:
+      summary: Verify an account with a code sent to the email
+      operationId: verifyAcountController
+      parameters:
+        - name: email
+          in: path
+          description: The email of the account
+          required: true
+          type: string
+        - name: vcode
+          in: path
+          description: verification code
+          required: true
+          type: integer
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '401':
+            description: Unauthorized
+            schema:
+                $ref: '#/definitions/ErrorModel'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
+  /validate-auth-token/{token}:
+    get:
+      summary: decrypts session token
+      operationId: validateAuthTokenController
+      parameters:
+        - name: token
+          in: path
+          description: token with the information
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionData'
+        '401':
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorModel'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorModel'
+
   /authentication/{email}/{password}:
     get:
       summary: Validates the email and password for a login
@@ -102,7 +161,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TokenData'
+            $ref: '#/definitions/AuthToken'
         '400':
           description: Bad Request
           schema:
@@ -111,8 +170,8 @@ paths:
             description: Unauthorized
             schema:
                 $ref: '#/definitions/ErrorModel'
-        '409':
-          description: Conflict
+        '406':
+          description: Not Acceptable
           schema:
             $ref: '#/definitions/ErrorModel'
         '500':
@@ -161,7 +220,13 @@ definitions:
             typeid:
                 type: integer
 
-    TokenData:
+    AuthToken:
+        type: object
+        properties:
+            tocken:
+                type: string
+    
+    SessionData:
         type: object
         properties:
             id:
