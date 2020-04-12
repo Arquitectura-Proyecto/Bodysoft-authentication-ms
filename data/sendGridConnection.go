@@ -1,8 +1,6 @@
 package data
 
 import (
-	"fmt"
-
 	"github.com/jpbmdev/Bodysoft-authentication-ms/credentials"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -17,10 +15,9 @@ func SendEmail(email string, htmlContentp string, subjectp string) error {
 	htmlContent := htmlContentp
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 	client := sendgrid.NewSendClient(credentials.Sendgrid)
-	response, err := client.Send(message)
+	_, err := client.Send(message)
 	if err != nil {
 		return err
 	}
-	fmt.Println(response.StatusCode)
 	return nil
 }

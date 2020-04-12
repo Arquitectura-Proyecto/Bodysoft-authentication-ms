@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -55,14 +56,14 @@ func ValidateNewPass(newpass string, pass string) (string, int) {
 	return "ok", http.StatusNoContent
 }
 
-// ServFindUserByEmail ..
-func ServFindUserByEmail(user models.User) (string, int) {
+// FindUserByEmail ..
+func FindUserByEmail(user models.User) (int, error) {
 	if err := repository.FindUserByEmail(user); err == nil {
-		return "Otra cuenta ya utiliza ese correo", http.StatusConflict
+		return http.StatusConflict, errors.New("Otra cuenta ya utiliza ese correo")
 	} else if err.Error() == "record not found" {
-		return "Correo diponible", http.StatusCreated
+		return http.StatusCreated, nil
 	} else {
-		return err.Error(), http.StatusInternalServerError
+		return http.StatusInternalServerError, err
 	}
 }
 
@@ -73,20 +74,29 @@ func GetAuthTockenData(email string, pass string) (uint, uint, int, error) {
 	user.Password = pass
 	if err := repository.GetUserByEmailPass(&user); err != nil {
 		if err.Error() == "record not found" {
-			return 0, 0, http.StatusUnauthorized, err
+			return 0, 0, http.StatusUnauthorized, errors.New("Usuario o Contraseña incorrectos")
 		}
 		return 0, 0, http.StatusInternalServerError, err
+	}
+	if !user.Check {
+		return 0, 0, http.StatusNotAcceptable, errors.New("La cuenta no ha sido verificada")
 	}
 	id := user.ID
 	typeid := user.TypeID
 	return id, typeid, http.StatusOK, nil
 }
 
-// ServCreateUser ..
-func ServCreateUser(user models.User) error {
-	user.Validate = false
+// CreateUserAndVerificationEmail ..
+func CreateUserAndVerificationEmail(user models.User) (int, error) {
+	user.Check = false
 	user.VCode = generateVcode()
-	return repository.CreateUser(user)
+	if err := repository.CreateUser(user); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	if err := repository.GenerateValidationEmail(user.Email, user.VCode); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return http.StatusCreated, nil
 }
 
 // UpdatePassword ..
@@ -94,7 +104,7 @@ func UpdatePassword(changePass models.ChangePass) (int, error) {
 	var user models.User
 	user.ID = changePass.ID
 	user.Password = changePass.Password
-	if err := repository.GetUserUserByIDPass(&user); err != nil {
+	if err := repository.GetUserByIDPass(&user); err != nil {
 		if err.Error() == "record not found" {
 			return http.StatusUnauthorized, err
 		}
@@ -105,6 +115,29 @@ func UpdatePassword(changePass models.ChangePass) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusNoContent, nil
+}
+
+// ValidateUser ..
+func ValidateUser(email string, vcode uint) (int, error) {
+	var user models.User
+	user.Email = email
+	if err := repository.GetUserByEmail(&user); err != nil {
+		if err.Error() == "record not found" {
+			return http.StatusConflict, err
+		}
+		return http.StatusInternalServerError, err
+	}
+	if !user.Check {
+		if user.VCode == vcode {
+			user.Check = true
+			if err := repository.UpdateUser(user); err != nil {
+				return http.StatusInternalServerError, err
+			}
+			return http.StatusNoContent, nil
+		}
+		return http.StatusBadRequest, errors.New("Código de Verificación Incorrecto")
+	}
+	return http.StatusConflict, errors.New("El usuario ya esta Verificado")
 }
 
 // GenerateEmailData ..

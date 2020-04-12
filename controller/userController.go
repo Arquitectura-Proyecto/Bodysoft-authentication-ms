@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/jpbmdev/Bodysoft-authentication-ms/models"
@@ -18,18 +19,18 @@ func createUserController(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, value, http.StatusBadRequest)
 		return
 	}
-	if err, status := services.ServFindUserByEmail(User); err != "Correo diponible" {
-		http.Error(w, err, status)
+	if status, err := services.FindUserByEmail(User); err != nil {
+		http.Error(w, err.Error(), status)
 		return
 	}
-	if err := services.ServCreateUser(User); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if status, err := services.CreateUserAndVerificationEmail(User); err != nil {
+		http.Error(w, err.Error(), status)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
 }
 
-func recoverPasswordWithEmail(w http.ResponseWriter, r *http.Request) {
+func recoverPasswordController(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	email := vars["email"]
 	if !services.ValidateEmail(email) {
@@ -43,7 +44,22 @@ func recoverPasswordWithEmail(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func validateAuthToken(w http.ResponseWriter, r *http.Request) {
+func verifyAcountController(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	email := vars["email"]
+	vcode, err := strconv.Atoi(vars["vcode"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if status, err := services.ValidateUser(email, uint(vcode)); err != nil {
+		http.Error(w, err.Error(), status)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func validateAuthTokenController(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 	id, typeid, status, err := services.ValidateJWT(token)

@@ -18,8 +18,9 @@ func HandleRequest() {
 	myRouter.HandleFunc("/", apiStatus)
 	myRouter.HandleFunc("/create-user", createUserController).Methods("POST")
 	myRouter.HandleFunc("/get-types", getTypesController).Methods("GET")
-	myRouter.HandleFunc("/recover-password/{email}", recoverPasswordWithEmail).Methods("GET")
-	myRouter.HandleFunc("/validate-auth-token/{token}", validateAuthToken).Methods("GET")
+	myRouter.HandleFunc("/recover-password/{email}", recoverPasswordController).Methods("GET")
+	myRouter.HandleFunc("/verify-acount/{email}/{vcode}", verifyAcountController).Methods("GET")
+	myRouter.HandleFunc("/validate-auth-token/{token}", validateAuthTokenController).Methods("GET")
 	myRouter.HandleFunc("/authentication/{email}/{password}", authenticationController).Methods("GET")
 	myRouter.HandleFunc("/change-password", chagePasswordController).Methods("PUT")
 

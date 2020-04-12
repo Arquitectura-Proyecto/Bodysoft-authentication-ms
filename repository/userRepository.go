@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strconv"
+
 	"github.com/jpbmdev/Bodysoft-authentication-ms/data"
 	"github.com/jpbmdev/Bodysoft-authentication-ms/models"
 )
@@ -35,8 +37,8 @@ func GetUserByEmail(user *models.User) error {
 	return nil
 }
 
-// GetUserUserByIDPass ..
-func GetUserUserByIDPass(user *models.User) error {
+// GetUserByIDPass ..
+func GetUserByIDPass(user *models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
 	if err := db.Where("ID = ? AND Password = ?", user.ID, user.Password).First(&user).Error; err != nil {
@@ -67,8 +69,18 @@ func UpdateUser(user models.User) error {
 
 // GenerateRecoveryEmail .
 func GenerateRecoveryEmail(email string, password string) error {
-	subject := "Recuperacion de Contraseña Bodysoft"
+	subject := "Recuperación de Contraseña Bodysoft"
 	htmlContent := "<h1> Su contraseña es: " + password + "</h1>"
+	if err := data.SendEmail(email, htmlContent, subject); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GenerateValidationEmail .
+func GenerateValidationEmail(email string, vcode uint) error {
+	subject := "Código de Verification BodySoft"
+	htmlContent := "<h1> Su codigo es: " + strconv.Itoa(int(vcode)) + "</h1>"
 	if err := data.SendEmail(email, htmlContent, subject); err != nil {
 		return err
 	}

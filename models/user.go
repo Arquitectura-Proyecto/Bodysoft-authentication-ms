@@ -12,5 +12,5 @@ type User struct {
 	Password string
 	TypeID   uint
 	VCode    uint
-	Validate bool
+	Check    bool
 }
