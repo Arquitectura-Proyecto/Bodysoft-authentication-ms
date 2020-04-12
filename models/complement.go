@@ -1,15 +1,8 @@
 package models
 
-// Auth ..
-type Auth struct {
-	Email    string
-	Password string
-}
-
-// TokenData ..
-type TokenData struct {
-	ID     uint
-	TypeID uint
+// AuthToken ..
+type AuthToken struct {
+	Token string
 }
 
 // ChangePass ..
@@ -17,4 +10,10 @@ type ChangePass struct {
 	ID          uint
 	Password    string
 	NewPassword string
+}
+
+// SessionData ..
+type SessionData struct {
+	ID     float64
+	TypeID float64
 }

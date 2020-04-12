@@ -1,9 +1,13 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/jpbmdev/Bodysoft-authentication-ms/credentials"
 	"github.com/jpbmdev/Bodysoft-authentication-ms/models"
 	"github.com/jpbmdev/Bodysoft-authentication-ms/repository"
 )
@@ -44,107 +48,99 @@ func ValidateNewPass(newpass string, pass string) (string, int) {
 	return "ok", http.StatusNoContent
 }
 
-// ValidateAuth ..
-func ValidateAuth(auth models.Auth) string {
-	if !ValidateEmail(auth.Email) {
-		return "Email no valido"
-	}
-	return "ok"
-}
-
 // ServFindUserByEmail ..
 func ServFindUserByEmail(user models.User) (string, int) {
-	if status := repository.FindUserByEmail(user); status == "Usuario Encontrado" {
+	if err := repository.FindUserByEmail(user); err == nil {
 		return "Otra cuenta ya utiliza ese correo", http.StatusConflict
-	} else if status == "record not found" {
+	} else if err.Error() == "record not found" {
 		return "Correo diponible", http.StatusCreated
 	} else {
-		return status, http.StatusInternalServerError
+		return err.Error(), http.StatusInternalServerError
 	}
 }
 
-// AuthFindUserByEmail ..
-func AuthFindUserByEmail(auth models.Auth) (string, int) {
+// GetAuthTockenData ..
+func GetAuthTockenData(email string, pass string) (uint, uint, int, error) {
 	var user models.User
-	user.Email = auth.Email
-	if status := repository.FindUserByEmail(user); status == "Usuario Encontrado" {
-		return "ok", http.StatusOK
-	} else if status == "record not found" {
-		return "Usuario no encontrado", http.StatusConflict
-	} else {
-		return status, http.StatusInternalServerError
+	user.Email = email
+	user.Password = pass
+	if err := repository.GetUserByEmailPass(&user); err != nil {
+		if err.Error() == "record not found" {
+			return 0, 0, http.StatusUnauthorized, err
+		}
+		return 0, 0, http.StatusInternalServerError, err
 	}
-}
-
-// AuthFindUserByEmailPass ..
-func AuthFindUserByEmailPass(auth models.Auth) (string, int) {
-	var user models.User
-	user.Email = auth.Email
-	user.Password = auth.Password
-	if status := repository.FindUserByEmailPass(user); status == "Usuario Encontrado" {
-		return "ok", http.StatusOK
-	} else if status == "record not found" {
-		return "Contraseña incorrecta", http.StatusUnauthorized
-	} else {
-		return status, http.StatusInternalServerError
-	}
-}
-
-// AuthFindUserByIDPass ..
-func AuthFindUserByIDPass(changePass models.ChangePass) (string, int) {
-	var user models.User
-	user.ID = changePass.ID
-	user.Password = changePass.Password
-	if status := repository.FindUserByIDPass(user); status == "Usuario Encontrado" {
-		return "ok", http.StatusOK
-	} else if status == "record not found" {
-		return "Contraseña incorrecta", http.StatusUnauthorized
-	} else {
-		return status, http.StatusInternalServerError
-	}
+	id := user.ID
+	typeid := user.TypeID
+	return id, typeid, http.StatusOK, nil
 }
 
 // ServCreateUser ..
-func ServCreateUser(user models.User) string {
+func ServCreateUser(user models.User) error {
 	return repository.CreateUser(user)
 }
 
-// CreateAuthToker ..
-func CreateAuthToker(Auth models.Auth) (models.TokenData, string) {
-	var user models.User
-	var TokenData models.TokenData
-	user.Email = Auth.Email
-	if err := repository.GetUserUserByEmail(&user); err != "ok" {
-		return TokenData, err
-	}
-	TokenData.ID = user.ID
-	TokenData.TypeID = user.TypeID
-	return TokenData, "ok"
-}
-
 // UpdatePassword ..
-func UpdatePassword(changePass models.ChangePass) (string, int) {
+func UpdatePassword(changePass models.ChangePass) (int, error) {
 	var user models.User
 	user.ID = changePass.ID
-	if err := repository.GetUserUserByID(&user); err != "ok" {
-		return err, http.StatusInternalServerError
+	user.Password = changePass.Password
+	if err := repository.GetUserUserByIDPass(&user); err != nil {
+		if err.Error() == "record not found" {
+			return http.StatusUnauthorized, err
+		}
+		return http.StatusInternalServerError, err
 	}
 	user.Password = changePass.NewPassword
-	if err := repository.UpdateUser(user); err != "ok" {
-		return err, http.StatusInternalServerError
+	if err := repository.UpdateUser(user); err != nil {
+		return http.StatusInternalServerError, err
 	}
-	return "ok", http.StatusNoContent
+	return http.StatusNoContent, nil
 }
 
 // GenerateEmailData ..
-func GenerateEmailData(email string) string {
+func GenerateEmailData(email string) (int, error) {
 	var user models.User
 	user.Email = email
-	if err := repository.GetUserUserByEmail(&user); err != "ok" {
-		return err
+	if err := repository.GetUserByEmail(&user); err != nil {
+		if err.Error() == "record not found" {
+			return http.StatusConflict, err
+		}
+		return http.StatusInternalServerError, err
 	}
-	if err := repository.GenerateEmail(email, user.Password); err != "ok" {
-		return err
+	if err := repository.GenerateRecoveryEmail(email, user.Password); err != nil {
+		return http.StatusInternalServerError, err
 	}
-	return "ok"
+	return http.StatusNoContent, nil
+}
+
+// GenerateJWT ..
+func GenerateJWT(id uint, typeid uint) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["ID"] = id
+	claims["TypeID"] = typeid
+	claims["exp"] = time.Now().Add(time.Minute * 120).Unix()
+	tokenString, err := token.SignedString(credentials.JWTkey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
+// ValidateJWT ..
+func ValidateJWT(Token string) (float64, float64, int, error) {
+	token, err := jwt.Parse(Token, func(tocker *jwt.Token) (interface{}, error) {
+		if _, ok := tocker.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("There was an error")
+		}
+		return credentials.JWTkey, nil
+	})
+	if err != nil {
+		return 0, 0, http.StatusUnauthorized, err
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims["ID"].(float64), claims["TypeID"].(float64), http.StatusOK, nil
+	}
+	return 0, 0, http.StatusInternalServerError, err
 }

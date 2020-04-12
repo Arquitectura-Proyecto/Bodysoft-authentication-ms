@@ -9,7 +9,7 @@ import (
 )
 
 // SendEmail ..
-func SendEmail(email string, htmlContentp string, subjectp string) string {
+func SendEmail(email string, htmlContentp string, subjectp string) error {
 	from := mail.NewEmail("BodySoft", "bodysoftms@gmail.com")
 	to := mail.NewEmail("User", email)
 	subject := subjectp
@@ -19,8 +19,8 @@ func SendEmail(email string, htmlContentp string, subjectp string) string {
 	client := sendgrid.NewSendClient(credentials.Sendgrid)
 	response, err := client.Send(message)
 	if err != nil {
-		return err.Error()
+		return err
 	}
 	fmt.Println(response.StatusCode)
-	return "ok"
+	return nil
 }

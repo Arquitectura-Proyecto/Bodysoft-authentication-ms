@@ -6,81 +6,71 @@ import (
 )
 
 // FindUserByEmail ..
-func FindUserByEmail(user models.User) string {
+func FindUserByEmail(user models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
 	if err := db.Where("Email = ?", user.Email).First(&user).Error; err != nil {
-		return err.Error()
+		return err
 	}
-	return "Usuario Encontrado"
+	return nil
 }
 
-// FindUserByEmailPass ..
-func FindUserByEmailPass(user models.User) string {
+// GetUserByEmailPass ..
+func GetUserByEmailPass(user *models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
 	if err := db.Where("Email = ? AND Password = ?", user.Email, user.Password).First(&user).Error; err != nil {
-		return err.Error()
+		return err
 	}
-	return "Usuario Encontrado"
+	return nil
 }
 
-// FindUserByIDPass ..
-func FindUserByIDPass(user models.User) string {
-	db := data.DatabaseConection()
-	defer db.Close()
-	if err := db.Where("ID = ? AND Password = ?", user.ID, user.Password).First(&user).Error; err != nil {
-		return err.Error()
-	}
-	return "Usuario Encontrado"
-}
-
-// GetUserUserByEmail ..
-func GetUserUserByEmail(user *models.User) string {
+// GetUserByEmail ..
+func GetUserByEmail(user *models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
 	if err := db.Where("Email = ?", user.Email).First(&user).Error; err != nil {
-		return err.Error()
+		return err
 	}
-	return "ok"
+	return nil
 }
 
-// GetUserUserByID ..
-func GetUserUserByID(user *models.User) string {
+// GetUserUserByIDPass ..
+func GetUserUserByIDPass(user *models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
-	if err := db.Where("ID = ?", user.ID).First(&user).Error; err != nil {
-		return err.Error()
+	if err := db.Where("ID = ? AND Password = ?", user.ID, user.Password).First(&user).Error; err != nil {
+		return err
 	}
-	return "ok"
+	return nil
 }
 
 // CreateUser .
-func CreateUser(user models.User) string {
+func CreateUser(user models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
 	if err := db.Create(&user).Error; err != nil {
-		return err.Error()
+		return err
 	}
-	return "ok"
+	return nil
 }
 
 // UpdateUser ..
-func UpdateUser(user models.User) string {
+func UpdateUser(user models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
 	if err := db.Save(&user).Error; err != nil {
-		return err.Error()
-	}
-	return "ok"
-}
-
-// GenerateEmail .
-func GenerateEmail(email string, password string) string {
-	subject := "Recuperacion de Contraseña Bodysoft"
-	htmlContent := "<h1> Su contraseña es: " + password + "</h1>"
-	if err := data.SendEmail(email, htmlContent, subject); err != "ok" {
 		return err
 	}
-	return "ok"
+	return nil
+}
+
+// GenerateRecoveryEmail .
+func GenerateRecoveryEmail(email string, password string) error {
+	subject := "Recuperacion de Contraseña Bodysoft"
+	htmlContent := "<h1> Su contraseña es: " + password + "</h1>"
+	if err := data.SendEmail(email, htmlContent, subject); err != nil {
+		return err
+	}
+	return nil
 }
