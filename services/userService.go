@@ -68,22 +68,23 @@ func FindUserByEmail(user models.User) (int, error) {
 }
 
 // GetAuthTockenData ..
-func GetAuthTockenData(email string, pass string) (uint, uint, int, error) {
+func GetAuthTockenData(email string, pass string) (uint, uint, bool, int, error) {
 	var user models.User
 	user.Email = email
 	user.Password = pass
 	if err := repository.GetUserByEmailPass(&user); err != nil {
 		if err.Error() == "record not found" {
-			return 0, 0, http.StatusUnauthorized, errors.New("Usuario o Contraseña incorrectos")
+			return 0, 0, false, http.StatusUnauthorized, errors.New("Usuario o Contraseña incorrectos")
 		}
-		return 0, 0, http.StatusInternalServerError, err
+		return 0, 0, false, http.StatusInternalServerError, err
 	}
 	if !user.Check {
-		return 0, 0, http.StatusNotAcceptable, errors.New("La cuenta no ha sido verificada")
+		return 0, 0, false, http.StatusNotAcceptable, errors.New("La cuenta no ha sido verificada")
 	}
 	id := user.ID
 	typeid := user.TypeID
-	return id, typeid, http.StatusOK, nil
+	profile := user.Profile
+	return id, typeid, profile, http.StatusOK, nil
 }
 
 // CreateUserAndVerificationEmail ..
@@ -162,11 +163,12 @@ func GenerateEmailData(email string) (int, error) {
 }
 
 // GenerateJWT ..
-func GenerateJWT(id uint, typeid uint) (string, error) {
+func GenerateJWT(id uint, typeid uint, profile bool) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["ID"] = id
 	claims["TypeID"] = typeid
+	claims["Profile"] = profile
 	claims["exp"] = time.Now().Add(time.Minute * 120).Unix()
 	tokenString, err := token.SignedString(credentials.JWTkey)
 	if err != nil {
@@ -176,7 +178,7 @@ func GenerateJWT(id uint, typeid uint) (string, error) {
 }
 
 // ValidateJWT ..
-func ValidateJWT(Token string) (uint, uint, int, error) {
+func ValidateJWT(Token string) (uint, uint, bool, int, error) {
 	token, err := jwt.Parse(Token, func(tocker *jwt.Token) (interface{}, error) {
 		if _, ok := tocker.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("There was an error")
@@ -184,16 +186,16 @@ func ValidateJWT(Token string) (uint, uint, int, error) {
 		return credentials.JWTkey, nil
 	})
 	if err != nil {
-		return 0, 0, http.StatusUnauthorized, err
+		return 0, 0, false, http.StatusUnauthorized, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return uint(claims["ID"].(float64)), uint(claims["TypeID"].(float64)), http.StatusOK, nil
+		return uint(claims["ID"].(float64)), uint(claims["TypeID"].(float64)), claims["Profile"].(bool), http.StatusOK, nil
 	}
-	return 0, 0, http.StatusInternalServerError, err
+	return 0, 0, false, http.StatusInternalServerError, err
 }
 
 func getIDfromJWT(token string) (uint, error) {
-	id, _, _, err := ValidateJWT(token)
+	id, _, _, _, err := ValidateJWT(token)
 	if err != nil {
 		return 0, err
 	}

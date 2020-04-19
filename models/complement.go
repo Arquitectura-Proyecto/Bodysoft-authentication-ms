@@ -14,6 +14,7 @@ type ChangePass struct {
 
 // SessionData ..
 type SessionData struct {
-	ID     uint
-	TypeID uint
+	ID      uint
+	TypeID  uint
+	Profile bool
 }

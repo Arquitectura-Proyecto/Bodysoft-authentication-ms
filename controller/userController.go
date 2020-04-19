@@ -33,6 +33,10 @@ func createUserController(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+func assignProfileController(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func recoverPasswordController(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	email := vars["email"]
@@ -65,12 +69,12 @@ func verifyAcountController(w http.ResponseWriter, r *http.Request) {
 func validateAuthTokenController(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
-	id, typeid, status, err := services.ValidateJWT(token)
+	id, typeid, profile, status, err := services.ValidateJWT(token)
 	if err != nil {
 		http.Error(w, err.Error(), status)
 		return
 	}
-	sessionData := models.SessionData{ID: id, TypeID: typeid}
+	sessionData := models.SessionData{ID: id, TypeID: typeid, Profile: profile}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(sessionData)
 }
@@ -84,12 +88,12 @@ func authenticationController(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Email no valido", http.StatusBadRequest)
 		return
 	}
-	id, typeid, status, err := services.GetAuthTockenData(email, password)
+	id, typeid, profile, status, err := services.GetAuthTockenData(email, password)
 	if err != nil {
 		http.Error(w, err.Error(), status)
 		return
 	}
-	token, err := services.GenerateJWT(id, typeid)
+	token, err := services.GenerateJWT(id, typeid, profile)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
