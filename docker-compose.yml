@@ -5,7 +5,7 @@ services:
   boysoft-authentication-ms:
     build: .
     ports:
-      - "4000:4000"
+      - "4002:4000"
     depends_on: 
       - boysoft-authentication-db
     networks:
@@ -25,7 +25,7 @@ services:
       MYSQL_USER: juanpablo
       MYSQL_PASSWORD: 12345
     ports:
-      - "3306:3306"
+      - "3309:3306"
     networks:
       - authNet
 

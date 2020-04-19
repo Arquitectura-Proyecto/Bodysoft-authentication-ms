@@ -7,13 +7,14 @@ type AuthToken struct {
 
 // ChangePass ..
 type ChangePass struct {
-	ID          uint
+	Token       string
 	Password    string
 	NewPassword string
 }
 
 // SessionData ..
 type SessionData struct {
-	ID     float64
-	TypeID float64
+	ID      uint
+	TypeID  uint
+	Profile bool
 }
