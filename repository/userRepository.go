@@ -17,6 +17,16 @@ func FindUserByEmail(user models.User) error {
 	return nil
 }
 
+// GetUserByEmail ..
+func GetUserByEmail(user *models.User) error {
+	db := data.DatabaseConection()
+	defer db.Close()
+	if err := db.Where("Email = ?", user.Email).First(&user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetUserByEmailPass ..
 func GetUserByEmailPass(user *models.User) error {
 	db := data.DatabaseConection()
@@ -27,11 +37,11 @@ func GetUserByEmailPass(user *models.User) error {
 	return nil
 }
 
-// GetUserByEmail ..
-func GetUserByEmail(user *models.User) error {
+// GetUserByID ..
+func GetUserByID(user *models.User) error {
 	db := data.DatabaseConection()
 	defer db.Close()
-	if err := db.Where("Email = ?", user.Email).First(&user).Error; err != nil {
+	if err := db.Where("ID = ?", user.ID).First(&user).Error; err != nil {
 		return err
 	}
 	return nil
