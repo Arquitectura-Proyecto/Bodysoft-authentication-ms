@@ -13,4 +13,5 @@ type User struct {
 	TypeID   uint
 	VCode    uint
 	Check    bool
+	Profile  bool
 }

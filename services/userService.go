@@ -89,6 +89,7 @@ func GetAuthTockenData(email string, pass string) (uint, uint, int, error) {
 // CreateUserAndVerificationEmail ..
 func CreateUserAndVerificationEmail(user models.User) (int, error) {
 	user.Check = false
+	user.Profile = false
 	user.VCode = generateVcode()
 	if err := repository.CreateUser(user); err != nil {
 		return http.StatusInternalServerError, err

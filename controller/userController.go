@@ -14,7 +14,10 @@ import (
 func createUserController(w http.ResponseWriter, r *http.Request) {
 	var User models.User
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal(reqBody, &User)
+	if err := json.Unmarshal(reqBody, &User); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	if value := services.ValidateData(User); value != "ok" {
 		http.Error(w, value, http.StatusBadRequest)
 		return
