@@ -25,6 +25,6 @@ func HandleRequest() {
 	myRouter.HandleFunc("/authentication/{email}/{password}", authenticationController).Methods("GET")
 	myRouter.HandleFunc("/change-password", chagePasswordController).Methods("PUT")
 
-	fmt.Println("Port 4000 is listening")
-	log.Fatal(http.ListenAndServe(":4000", myRouter))
+	fmt.Println("Port 4002 is listening")
+	log.Fatal(http.ListenAndServe(":4002", myRouter))
 }
