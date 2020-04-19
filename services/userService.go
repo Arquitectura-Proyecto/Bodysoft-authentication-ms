@@ -103,11 +103,15 @@ func CreateUserAndVerificationEmail(user models.User) (int, error) {
 // UpdatePassword ..
 func UpdatePassword(changePass models.ChangePass) (int, error) {
 	var user models.User
-	user.ID = changePass.ID
+	id, err := getIDfromJWT(changePass.Token)
+	if err != nil {
+		return http.StatusUnauthorized, err
+	}
+	user.ID = id
 	user.Password = changePass.Password
 	if err := repository.GetUserByIDPass(&user); err != nil {
 		if err.Error() == "record not found" {
-			return http.StatusUnauthorized, err
+			return http.StatusUnauthorized, errors.New("Contraseña Incorrecta")
 		}
 		return http.StatusInternalServerError, err
 	}
@@ -172,7 +176,7 @@ func GenerateJWT(id uint, typeid uint) (string, error) {
 }
 
 // ValidateJWT ..
-func ValidateJWT(Token string) (float64, float64, int, error) {
+func ValidateJWT(Token string) (uint, uint, int, error) {
 	token, err := jwt.Parse(Token, func(tocker *jwt.Token) (interface{}, error) {
 		if _, ok := tocker.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("There was an error")
@@ -183,7 +187,15 @@ func ValidateJWT(Token string) (float64, float64, int, error) {
 		return 0, 0, http.StatusUnauthorized, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["ID"].(float64), claims["TypeID"].(float64), http.StatusOK, nil
+		return uint(claims["ID"].(float64)), uint(claims["TypeID"].(float64)), http.StatusOK, nil
 	}
 	return 0, 0, http.StatusInternalServerError, err
+}
+
+func getIDfromJWT(token string) (uint, error) {
+	id, _, _, err := ValidateJWT(token)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }

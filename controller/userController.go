@@ -102,7 +102,10 @@ func authenticationController(w http.ResponseWriter, r *http.Request) {
 func chagePasswordController(w http.ResponseWriter, r *http.Request) {
 	var ChangePass models.ChangePass
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal(reqBody, &ChangePass)
+	if err := json.Unmarshal(reqBody, &ChangePass); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	if err, status := services.ValidateNewPass(ChangePass.NewPassword, ChangePass.Password); err != "ok" {
 		http.Error(w, err, status)
 		return
