@@ -34,7 +34,17 @@ func createUserController(w http.ResponseWriter, r *http.Request) {
 }
 
 func assignProfileController(w http.ResponseWriter, r *http.Request) {
-
+	vars := mux.Vars(r)
+	token := vars["token"]
+	var AuthToken models.AuthToken
+	newtoken, status, err := services.AssignProfile(token)
+	if err != nil {
+		http.Error(w, err.Error(), status)
+		return
+	}
+	AuthToken.Token = newtoken
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(AuthToken)
 }
 
 func recoverPasswordController(w http.ResponseWriter, r *http.Request) {

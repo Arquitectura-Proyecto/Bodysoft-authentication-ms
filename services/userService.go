@@ -146,6 +146,35 @@ func ValidateUser(email string, vcode uint) (int, error) {
 	return http.StatusConflict, errors.New("El usuario ya esta Verificado")
 }
 
+// AssignProfile ..
+func AssignProfile(token string) (string, int, error) {
+	var user models.User
+	id, err := getIDfromJWT(token)
+	if err != nil {
+		return "", http.StatusUnauthorized, err
+	}
+	user.ID = id
+	if err := repository.GetUserByID(&user); err != nil {
+		if err.Error() == "record not found" {
+			return "", http.StatusConflict, err
+		}
+		return "", http.StatusInternalServerError, err
+	}
+	if !user.Profile {
+		user.Profile = true
+		if err := repository.UpdateUser(user); err != nil {
+			return "", http.StatusInternalServerError, err
+		}
+		newtoken, err := GenerateJWT(user.ID, user.TypeID, user.Profile)
+		if err != nil {
+			return "", http.StatusInternalServerError, err
+		}
+		return newtoken, http.StatusNoContent, nil
+	}
+	return "", http.StatusConflict, errors.New("El usuario ya tiene un perfil")
+
+}
+
 // GenerateEmailData ..
 func GenerateEmailData(email string) (int, error) {
 	var user models.User
