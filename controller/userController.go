@@ -22,6 +22,10 @@ func createUserController(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, value, http.StatusBadRequest)
 		return
 	}
+	if value := services.FindTypeByIDService(User.TypeID); value != "ok" {
+		http.Error(w, value, http.StatusBadRequest)
+		return
+	}
 	if status, err := services.FindUserByEmail(User); err != nil {
 		http.Error(w, err.Error(), status)
 		return

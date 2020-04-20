@@ -14,3 +14,13 @@ func GetTypes(Type *[]models.Type) string {
 	}
 	return "ok"
 }
+
+// FindTypeByID ..
+func FindTypeByID(Type models.Type) error {
+	db := data.DatabaseConection()
+	defer db.Close()
+	if err := db.Where("ID = ?", Type.ID).First(&Type).Error; err != nil {
+		return err
+	}
+	return nil
+}
