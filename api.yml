@@ -83,41 +83,6 @@ paths:
           schema:
             $ref: '#/definitions/ErrorModel'
 
-  /verify-acount/{email}/{vcode}:
-    get:
-      summary: Verify an account with a code sent to the email
-      operationId: verifyAcountController
-      parameters:
-        - name: email
-          in: path
-          description: The email of the account
-          required: true
-          type: string
-        - name: vcode
-          in: path
-          description: verification code
-          required: true
-          type: integer
-      responses:
-        '204':
-          description: No Content
-        '400':
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/ErrorModel'
-        '401':
-            description: Unauthorized
-            schema:
-                $ref: '#/definitions/ErrorModel'
-        '409':
-          description: Conflict
-          schema:
-            $ref: '#/definitions/ErrorModel'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/ErrorModel'
-
   /validate-auth-token/{token}:
     get:
       summary: decrypts session token
@@ -205,7 +170,69 @@ paths:
             description: Internal Server Error
             schema:
                $ref: '#/definitions/ErrorModel'
-   
+
+  /assign-profile/{token}:
+    put:
+      summary: It is indicated in the database that the user has a profile.
+      operationId: assignProfileController
+      parameters:
+        - name: token
+          in: path
+          description: token with the information
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthToken'
+        '401':
+            description: Unauthorized
+            schema:
+               $ref: '#/definitions/ErrorModel'
+        '409':
+            description: Conflict
+            schema:
+               $ref: '#/definitions/ErrorModel'
+        '500':
+            description: Internal Server Error
+            schema:
+               $ref: '#/definitions/ErrorModel'
+    
+  /verify-acount/{email}/{vcode}:
+    put:
+      summary: Verify an account with a code sent to the email
+      operationId: verifyAcountController
+      parameters:
+        - name: email
+          in: path
+          description: The email of the account
+          required: true
+          type: string
+        - name: vcode
+          in: path
+          description: verification code
+          required: true
+          type: integer
+      responses:
+        '204':
+              description: No Content
+        '400':
+              description: Bad Request
+              schema:
+               $ref: '#/definitions/ErrorModel'
+        '401':
+              description: Unauthorized
+              schema:
+               $ref: '#/definitions/ErrorModel'
+        '409':
+            description: Conflict
+            schema:
+               $ref: '#/definitions/ErrorModel'
+        '500':
+            description: Internal Server Error
+            schema:
+               $ref: '#/definitions/ErrorModel'
 
 definitions:
 
@@ -233,12 +260,14 @@ definitions:
                 type: integer
             typeid:
                 type: integer
+            profile:
+                type: boolean
 
     ChangePass:
         type: object
         properties:
-            id:
-                type: integer
+            token:
+                type: string
             password:
                 type: string
             newpassword:
