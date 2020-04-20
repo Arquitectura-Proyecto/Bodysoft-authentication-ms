@@ -14,3 +14,13 @@ func GetTypesService() ([]models.Type, string) {
 
 	return Type, "ok"
 }
+
+// FindTypeByIDService ..
+func FindTypeByIDService(typeid uint) string {
+	var Type models.Type
+	Type.ID = typeid
+	if err := repository.FindTypeByID(Type); err != nil {
+		return "El tipo de cuenta ingresado no existe"
+	}
+	return "ok"
+}

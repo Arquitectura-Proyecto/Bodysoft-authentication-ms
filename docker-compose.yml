@@ -5,7 +5,7 @@ services:
   boysoft-authentication-ms:
     build: .
     ports:
-      - "4002:4000"
+      - "4002:4002"
     depends_on: 
       - boysoft-authentication-db
     networks:

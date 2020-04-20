@@ -22,6 +22,10 @@ func createUserController(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, value, http.StatusBadRequest)
 		return
 	}
+	if value := services.FindTypeByIDService(User.TypeID); value != "ok" {
+		http.Error(w, value, http.StatusBadRequest)
+		return
+	}
 	if status, err := services.FindUserByEmail(User); err != nil {
 		http.Error(w, err.Error(), status)
 		return
@@ -33,20 +37,6 @@ func createUserController(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func assignProfileController(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-	var AuthToken models.AuthToken
-	newtoken, status, err := services.AssignProfile(token)
-	if err != nil {
-		http.Error(w, err.Error(), status)
-		return
-	}
-	AuthToken.Token = newtoken
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(AuthToken)
-}
-
 func recoverPasswordController(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	email := vars["email"]
@@ -55,21 +45,6 @@ func recoverPasswordController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if status, err := services.GenerateEmailData(email); err != nil {
-		http.Error(w, err.Error(), status)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func verifyAcountController(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	email := vars["email"]
-	vcode, err := strconv.Atoi(vars["vcode"])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if status, err := services.ValidateUser(email, uint(vcode)); err != nil {
 		http.Error(w, err.Error(), status)
 		return
 	}
@@ -125,6 +100,35 @@ func chagePasswordController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if status, err := services.UpdatePassword(ChangePass); err != nil {
+		http.Error(w, err.Error(), status)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func assignProfileController(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	var AuthToken models.AuthToken
+	newtoken, status, err := services.AssignProfile(token)
+	if err != nil {
+		http.Error(w, err.Error(), status)
+		return
+	}
+	AuthToken.Token = newtoken
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(AuthToken)
+}
+
+func verifyAcountController(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	email := vars["email"]
+	vcode, err := strconv.Atoi(vars["vcode"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if status, err := services.ValidateUser(email, uint(vcode)); err != nil {
 		http.Error(w, err.Error(), status)
 		return
 	}
