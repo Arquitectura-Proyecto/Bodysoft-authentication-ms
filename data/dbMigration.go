@@ -10,12 +10,12 @@ import (
 func DatabaseMigration() {
 	db := DatabaseConection()
 	db.AutoMigrate(&models.User{}, &models.Type{})
-	Type := models.Type{Name: "Trainer"}
-	if err := db.Where("name = ?", "Trainer").First(&Type).Error; err != nil {
+	Type := models.Type{Name: "Entrenador"}
+	if err := db.Where("name = ?", "Entrenador").First(&Type).Error; err != nil {
 		db.Create(&Type)
 	}
-	Type = models.Type{Name: "Consumer"}
-	if err := db.Where("name = ?", "Consumer").First(&Type).Error; err != nil {
+	Type = models.Type{Name: "Usuario"}
+	if err := db.Where("name = ?", "Usuario").First(&Type).Error; err != nil {
 		db.Create(&Type)
 	}
 	fmt.Println("Data Succesfully Migrated")
