@@ -1,4 +1,4 @@
-version: '3'
+version: '2.1'
 
 services:
 
@@ -7,15 +7,12 @@ services:
     ports:
       - "4002:4002"
     depends_on: 
+      boysoft-authentication-db:
+        condition: service_healthy
+    links:
       - boysoft-authentication-db
     networks:
       - authNet
-    restart: on-failure
-    healthcheck:
-        test: "mysqlcheck -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE"
-        interval: 20s
-        timeout: 5s
-        retries: 15
 
   boysoft-authentication-db:
     image: mysql:5.7
@@ -28,6 +25,11 @@ services:
       - "3309:3306"
     networks:
       - authNet
+    healthcheck:
+      test: "mysqlcheck -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE"
+      interval: 20s
+      timeout: 5s
+      retries: 15
 
 networks:
   authNet:
