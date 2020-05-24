@@ -72,6 +72,9 @@ func GetAuthTockenData(email string, pass string) (uint, uint, bool, int, error)
 	var user models.User
 	user.Email = email
 	user.Password = pass
+	if err := repository.LDAPFindUser(user.Email, user.Password); err != nil {
+		return 0, 0, false, http.StatusUnauthorized, err
+	}
 	if err := repository.GetUserByEmailPass(&user); err != nil {
 		if err.Error() == "record not found" {
 			return 0, 0, false, http.StatusUnauthorized, errors.New("Usuario o Contraseña incorrectos")

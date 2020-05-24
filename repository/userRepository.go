@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/jpbmdev/Bodysoft-authentication-ms/data"
@@ -93,6 +94,25 @@ func GenerateValidationEmail(email string, vcode uint) error {
 	htmlContent := "<h1> Su codigo es: " + strconv.Itoa(int(vcode)) + "</h1>"
 	if err := data.SendEmail(email, htmlContent, subject); err != nil {
 		return err
+	}
+	return nil
+}
+
+//LDAPFindUser ..
+func LDAPFindUser(email string, password string) error {
+	ldap := data.LDAPConnection()
+	searchRequest := data.LDAPSearchRequest(email)
+	sr, err := ldap.Search(searchRequest)
+	if err != nil {
+		return errors.New("Fallo de conexion con el servidor LDAP")
+	}
+	if len(sr.Entries) != 1 {
+		return errors.New("Usuario no existente en el servidor LDAP")
+	}
+	userdn := sr.Entries[0].DN
+	err = ldap.Bind(userdn, password)
+	if err != nil {
+		return errors.New("Contraseña incorrecta en el servidor LDAP")
 	}
 	return nil
 }
