@@ -1,14 +1,20 @@
 package data
 
 import (
+	"os"
+
 	"github.com/jinzhu/gorm"
 )
 
 //DatabaseConection ..
-//Development db "root:1234@tcp(localhost:3306)/authentication?charset=utf8&parseTime=True"
+//Development db "root:1234@tcp(host.docker.internal:3306)/authentication?charset=utf8&parseTime=True"
 //Docker db "juanpablo:12345@tcp(boysoft-authentication-db:3306)/authentication?charset=utf8&parseTime=True"
 func DatabaseConection() *gorm.DB {
-	db, err := gorm.Open("mysql", "juanpablo:12345@tcp(boysoft-authentication-db:3306)/authentication?charset=utf8&parseTime=True")
+	DBURL := os.Getenv("DBURL")
+	DBPORT := os.Getenv("DBPORT")
+	DBUSER := os.Getenv("DBUSER")
+	DBPASSWORD := os.Getenv("DBPASSWORD")
+	db, err := gorm.Open("mysql", DBUSER+":"+DBPASSWORD+"@tcp("+DBURL+":"+DBPORT+")/authentication?charset=utf8&parseTime=True")
 	if err != nil {
 		panic(err.Error())
 	}

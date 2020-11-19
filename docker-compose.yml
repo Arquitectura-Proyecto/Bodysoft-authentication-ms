@@ -4,6 +4,11 @@ services:
 
   boysoft-authentication-ms:
     build: .
+    environment:
+      DBURL: "54.235.92.243"
+      DBPORT: "30370"
+      DBUSER: "root"
+      DBPASSWORD: "12345678"
     ports:
       - "4002:4002"
     depends_on: 
