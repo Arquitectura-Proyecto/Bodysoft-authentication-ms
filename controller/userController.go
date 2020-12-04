@@ -88,17 +88,19 @@ func authenticationController(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(AuthToken)
 }
 
-func chagePasswordController(w http.ResponseWriter, r *http.Request) {
+func changePasswordController(w http.ResponseWriter, r *http.Request) {
 	var ChangePass models.ChangePass
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	if err := json.Unmarshal(reqBody, &ChangePass); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err, status := services.ValidateNewPass(ChangePass.NewPassword, ChangePass.Password); err != "ok" {
+
+	if err, status := services.ValidateNewPass(ChangePass.NewPassword); err != "ok" {
 		http.Error(w, err, status)
 		return
 	}
+
 	if status, err := services.UpdatePassword(ChangePass); err != nil {
 		http.Error(w, err.Error(), status)
 		return

@@ -12,6 +12,7 @@ import (
 	"github.com/jpbmdev/Bodysoft-authentication-ms/credentials"
 	"github.com/jpbmdev/Bodysoft-authentication-ms/models"
 	"github.com/jpbmdev/Bodysoft-authentication-ms/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ValidateEmail ..
@@ -46,12 +47,9 @@ func ValidateData(user models.User) string {
 }
 
 // ValidateNewPass ..
-func ValidateNewPass(newpass string, pass string) (string, int) {
+func ValidateNewPass(newpass string) (string, int) {
 	if !ValidatePass(newpass) {
 		return "Contraseña muy corta, minimo 8 caracteres", http.StatusBadRequest
-	}
-	if newpass == pass {
-		return "Las contraseña nueva debe ser diferente a la actual", http.StatusBadRequest
 	}
 	return "ok", http.StatusNoContent
 }
@@ -71,13 +69,17 @@ func FindUserByEmail(user models.User) (int, error) {
 func GetAuthTockenData(email string, pass string) (uint, uint, bool, int, error) {
 	var user models.User
 	user.Email = email
-	user.Password = pass
-	if err := repository.GetUserByEmailPass(&user); err != nil {
+	if err := repository.GetUserByEmail(&user); err != nil {
 		if err.Error() == "record not found" {
 			return 0, 0, false, http.StatusUnauthorized, errors.New("Usuario o Contraseña incorrectos")
 		}
 		return 0, 0, false, http.StatusInternalServerError, err
 	}
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(pass))
+	if err != nil {
+		return 0, 0, false, http.StatusUnauthorized, errors.New("Usuario o Contraseña incorrectos")
+	}
+
 	if !user.Check {
 		return 0, 0, false, http.StatusNotAcceptable, errors.New("La cuenta no ha sido verificada")
 	}
@@ -92,6 +94,7 @@ func CreateUserAndVerificationEmail(user models.User) (int, error) {
 	user.Check = false
 	user.Profile = false
 	user.VCode = generateVcode()
+	user.Password = hashAndSalt(user.Password)
 	if err := repository.CreateUser(user); err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -104,19 +107,20 @@ func CreateUserAndVerificationEmail(user models.User) (int, error) {
 // UpdatePassword ..
 func UpdatePassword(changePass models.ChangePass) (int, error) {
 	var user models.User
-	id, err := getIDfromJWT(changePass.Token)
+	email,err := repository.IsChangeValid(changePass.Token)
 	if err != nil {
-		return http.StatusUnauthorized, err
+		fmt.Println(err)
+		return http.StatusUnauthorized, errors.New("Token expirado, realize nuevamente el proceso de cambio de contraseña")
 	}
-	user.ID = id
-	user.Password = changePass.Password
-	if err := repository.GetUserByIDPass(&user); err != nil {
+	user.Email = email
+	if err := repository.GetUserByEmail(&user); err != nil {
 		if err.Error() == "record not found" {
-			return http.StatusUnauthorized, errors.New("Contraseña Incorrecta")
+			return http.StatusUnauthorized, errors.New("Problemas con la cuenta, intente de nuevo")
 		}
 		return http.StatusInternalServerError, err
 	}
-	user.Password = changePass.NewPassword
+	user.Password = hashAndSalt(changePass.NewPassword)
+
 	if err := repository.UpdateUser(user); err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -180,12 +184,12 @@ func GenerateEmailData(email string) (int, error) {
 	var user models.User
 	user.Email = email
 	if err := repository.GetUserByEmail(&user); err != nil {
-		if err.Error() == "record not found" {
-			return http.StatusConflict, err
-		}
-		return http.StatusInternalServerError, err
+		//if err.Error() == "record not found" {
+		//	return http.StatusConflict, err
+		//}
+		return http.StatusNoContent, nil
 	}
-	if err := repository.GenerateRecoveryEmail(email, user.Password); err != nil {
+	if err := repository.GenerateRecoveryEmail(email); err != nil {
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusNoContent, nil
@@ -229,4 +233,14 @@ func getIDfromJWT(token string) (uint, error) {
 		return 0, err
 	}
 	return id, nil
+}
+
+func hashAndSalt(pass string) string {
+	pwd := []byte(pass)
+	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return string(hash)
 }
